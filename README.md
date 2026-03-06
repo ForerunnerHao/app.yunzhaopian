@@ -57,8 +57,8 @@ sudo sshd -t && sudo systemctl restart ssh
 ## AWS: 在 AWS 上编辑 `/home/tunnel/.ssh/authorized_keys`
 
 ```bash
-#现在tunnel只监听33822端口
-command="/bin/false",no-pty,no-agent-forwarding,no-X11-forwarding,permitlisten="127.0.0.1:33822" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... aws-tunnel
+#现在tunnel只监听11451端口
+command="/bin/false",no-pty,no-agent-forwarding,no-X11-forwarding,permitlisten="127.0.0.1:11451" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... aws-tunnel
 ```
 
 ## AWS: 保证权限
@@ -101,7 +101,7 @@ ExecStart=/usr/bin/autossh -M 0 -N \
   -o ExitOnForwardFailure=yes \
   -o ServerAliveInterval=30 \
   -o ServerAliveCountMax=3 \
-  -R 127.0.0.1:33822:127.0.0.1:2283 \
+  -R 127.0.0.1:11451:127.0.0.1:2283 \
   aws-tokyo-tunnel
 Restart=always
 RestartSec=5
@@ -234,7 +234,7 @@ journalctl --user -u immich-reverse-tunnel.service -f
 编辑你的站点文件：
 
 ```bash
-sudo nano /etc/nginx/sites-available/app.yunzhaopian.cc
+sudo nano /etc/nginx/sites-available/o1145141414514o.asia
 ```
 
 把 `server { listen 443 ... }` 这整个块先注释/删除，暂时只保留这段 **80**：
@@ -243,7 +243,7 @@ sudo nano /etc/nginx/sites-available/app.yunzhaopian.cc
 server {
     listen 80;
     listen [::]:80;
-    server_name app.yunzhaopian.cc;
+    server_name o1145141414514o.asia;
 
     location ^~ /.well-known/acme-challenge/ {
         root /var/www/html;
@@ -270,7 +270,7 @@ server {
 然后：
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/app.yunzhaopian.cc /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/o1145141414514o.asia /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -282,13 +282,13 @@ sudo systemctl reload nginx
 ```bash
 sudo apt-get update
 sudo apt-get install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d app.yunzhaopian.cc
+sudo certbot --nginx -d o1145141414514o.asia
 ```
 
 如果你更想用纯 webroot（也很稳）：
 
 ```bash
-sudo certbot certonly --webroot -w /var/www/html -d app.yunzhaopian.cc
+sudo certbot certonly --webroot -w /var/www/html -d o1145141414514o.asia
 ```
 
 ------
@@ -297,8 +297,8 @@ sudo certbot certonly --webroot -w /var/www/html -d app.yunzhaopian.cc
 
 证书签发成功后，文件就会存在：
 
-- `/etc/letsencrypt/live/app.yunzhaopian.cc/fullchain.pem`
-- `/etc/letsencrypt/live/app.yunzhaopian.cc/privkey.pem`
+- `/etc/letsencrypt/live/o1145141414514o.asia/fullchain.pem`
+- `/etc/letsencrypt/live/o1145141414514o.asia/privkey.pem`
 
 这时你再把 443 server block 加回去（我给你一份可直接粘贴的完整版：80 跳 443 + 443 反代）。
 
@@ -306,7 +306,7 @@ sudo certbot certonly --webroot -w /var/www/html -d app.yunzhaopian.cc
 server {
     listen 80;
     listen [::]:80;
-    server_name app.yunzhaopian.cc;
+    server_name o1145141414514o.asia;
 
     location ^~ /.well-known/acme-challenge/ {
         root /var/www/html;
@@ -322,10 +322,10 @@ server {
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
-    server_name app.yunzhaopian.cc;
+    server_name o1145141414514o.asia;
 
-    ssl_certificate     /etc/letsencrypt/live/app.yunzhaopian.cc/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/app.yunzhaopian.cc/privkey.pem;
+    ssl_certificate     /etc/letsencrypt/live/o1145141414514o.asia/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/o1145141414514o.asia/privkey.pem;
     
 	# --- Security Headers (safe set) ---
     add_header Strict-Transport-Security "max-age=86400" always;
@@ -344,7 +344,7 @@ server {
     proxy_connect_timeout 60s;
 
     location / {
-        proxy_pass http://127.0.0.1:33822;
+        proxy_pass http://127.0.0.1:11451;
         proxy_http_version 1.1;
 
         proxy_set_header Upgrade $http_upgrade;
@@ -460,7 +460,7 @@ error_log /var/log/nginx/error.log;
 ###  server 里
 
 ```nginx
-# 在 /etc/nginx/sites-enabled/app.yunzhaopian.cc
+# 在 /etc/nginx/sites-enabled/o1145141414514o.asia
 # 非允许国家直接断开（省资源）
 if ($allow_country = 0) { return 444; }
 ```
@@ -491,7 +491,7 @@ limit_conn_zone $binary_remote_addr zone=conn_per_ip:10m;
 新建通用反代头文件： `/etc/nginx/snippets/proxy_immich_common.conf` 文件
 
 ```nginx
-proxy_pass http://127.0.0.1:33822;
+proxy_pass http://127.0.0.1:11451;
 proxy_http_version 1.1;
 
 proxy_set_header Upgrade $http_upgrade;
@@ -560,9 +560,9 @@ server {
     listen 443 ssl default_server;
     listen [::]:443 ssl default_server;
 
-    # 随便给个证书（可以用你现有的 app.yunzhaopian.cc 证书先顶着）
-    ssl_certificate     /etc/letsencrypt/live/app.yunzhaopian.cc/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/app.yunzhaopian.cc/privkey.pem;
+    # 随便给个证书（可以用你现有的 o1145141414514o.asia 证书先顶着）
+    ssl_certificate     /etc/letsencrypt/live/o1145141414514o.asia/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/o1145141414514o.asia/privkey.pem;
 
     return 444;
 }
@@ -581,7 +581,7 @@ sudo nginx -t && sudo systemctl reload nginx
 sudo apt update
 sudo apt install -y apache2-utils
 # 并发50条请求，共发请求200条
-ab -n 200 -c 50 https://app.yunzhaopian.cc/api/server/about
+ab -n 200 -c 50 https://o1145141414514o.asia/api/server/about
 ```
 
 ### 查询Nginx 安全日志（之前配置的）
@@ -602,7 +602,7 @@ sudo apt install -y websocat
 
 # 开 40 个 websocket 连接（超过你设置的 30）
 for i in {1..40}; do
-  websocat -n --ping-interval 20 "wss://app.yunzhaopian.cc/api/socket.io/?EIO=4&transport=websocket" >/dev/null 2>&1 &
+  websocat -n --ping-interval 20 "wss://o1145141414514o.asia/api/socket.io/?EIO=4&transport=websocket" >/dev/null 2>&1 &
 done
 sleep 2
 ```
@@ -649,12 +649,12 @@ sudo chmod 600 /etc/letsencrypt/cloudflare.ini
 sudo certbot certonly \
   --dns-cloudflare \
   --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini \
-  -d app.yunzhaopian.cc \
+  -d o1145141414514o.asia \
   --preferred-challenges dns-01 \
   --force-renewal
 
 # 查看cert更新脚本
-sudo cat /etc/letsencrypt/renewal/app.yunzhaopian.cc.conf
+sudo cat /etc/letsencrypt/renewal/o1145141414514o.asia.conf
 
 [renewalparams]
 account = 632ed04c54102e604d197a5984729ff7
@@ -672,7 +672,7 @@ sudo certbot renew --dry-run
 
 ```bash
 # 查看自动更新服务
-sudo nano /etc/letsencrypt/renewal/app.yunzhaopian.cc.conf
+sudo nano /etc/letsencrypt/renewal/o1145141414514o.asia.conf
 ```
 
 ## Fail2Ban
@@ -689,7 +689,7 @@ log_format sec_f2b '$remote_addr - - [$time_local] '
                    'rt=$request_time urt=$upstream_response_time uct=$upstream_connect_time uht=$upstream_header_time';
 
 # 例子
-114.514.141.451 - - [01/Mar/2026:06:19:28 +0000] "GET /api/server/about HTTP/1.0" 429 162 "-" "ApacheBench/2.3" host=app.yunzhaopian.cc scheme=https cc=CN prov="-" city="-" xff="-" cf="-" rt=0.000 urt=- uct=- uht=-
+114.514.141.451 - - [01/Mar/2026:06:19:28 +0000] "GET /api/server/about HTTP/1.0" 429 162 "-" "ApacheBench/2.3" host=o1145141414514o.asia scheme=https cc=CN prov="-" city="-" xff="-" cf="-" rt=0.000 urt=- uct=- uht=-
 ```
 
 ### 1) 安装并启用
@@ -810,7 +810,7 @@ sudo fail2ban-client set nginx-app-401 unbanip 222.87.162.22
 
 ```bash
 # 并发访问50 共200个 触发 429
-ab -n 200 -c 50 https://app.yunzhaopian.cc/ai/server/about
+ab -n 200 -c 50 https://o1145141414514o.asia/ai/server/about
 ```
 
 ## SSHD安全增强
@@ -885,7 +885,7 @@ sudo tail -n 60 /var/log/auth.log
 ```bash
 # sshd(服务端)配置链: sshd_config > Match User tunnel > authorized_keys
 sudo cat /home/tunnel/.ssh/authorized_keys
-restrict,port-forwarding,permitlisten="127.0.0.1:33822" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMp8TPHHV1sFlFKGtdm+9ZNWTFp+EArylo9wF8Mgm1A3 aws-tunnel
+restrict,port-forwarding,permitlisten="127.0.0.1:11451" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMp8TPHHV1sFlFKGtdm+9ZNWTFp+EArylo9wF8Mgm1A3 aws-tunnel
 
 #监听
 journalctl --user -u immich-reverse-tunnel.service -n 50
@@ -894,7 +894,7 @@ journalctl --user -u immich-reverse-tunnel.service -n 50
 
 ## 架构
 
-![immich_v2](https://github.com/user-attachments/assets/5d970d15-b843-46e5-9f01-8ba552d89be7)
+<img width="1033" height="672" alt="immich_v3" src="https://github.com/user-attachments/assets/961f984c-bed5-411c-9102-5f792b7d1fba" />
 
 
 # SSH重要文件配置信息
@@ -934,7 +934,7 @@ ExecStart=/usr/bin/autossh -M 0 -N \
   -o ExitOnForwardFailure=yes \
   -o ServerAliveInterval=30 \
   -o ServerAliveCountMax=3 \
-  -R 127.0.0.1:33822:127.0.0.1:2283 \
+  -R 127.0.0.1:11451:127.0.0.1:2283 \
   aws-tokyo-tunnel
 Restart=always
 RestartSec=5
@@ -988,10 +988,10 @@ Match User tunnel
     PermitTunnel no
     GatewayPorts no
     AllowTcpForwarding remote
-    PermitListen 127.0.0.1:33822 
+    PermitListen 127.0.0.1:11451 
 
 # 2. 在创建用户‘tunnel’的ssh中配置: /home/tunnel/.ssh/authorized_keys
-restrict,port-forwarding,permitlisten="127.0.0.1:33822" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMp8TPHHV1sFlFKGtdm+9ZNWTFp+EArylo9wF8Mgm1A3 aws-tunnel
+restrict,port-forwarding,permitlisten="127.0.0.1:11451" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMp8TPHHV1sFlFKGtdm+9ZNWTFp+EArylo9wF8Mgm1A3 aws-tunnel
 
 # 3.1 配置nginx反向代理: 修改全局配置 ‘/etc/nginx/nginx.conf’
 user www-data;
@@ -1098,11 +1098,11 @@ http {
 }
 
  
- # 3.2 配置nginx反向代理: /etc/nginx/sites-available/app.yunzhaopian.cc
+ # 3.2 配置nginx反向代理: /etc/nginx/sites-available/o1145141414514o.asia
 server {
     listen 80;
     listen [::]:80;
-    server_name app.yunzhaopian.cc;
+    server_name o1145141414514o.asia;
 
     location / {
         limit_except GET HEAD { deny all; }
@@ -1114,10 +1114,10 @@ server {
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
-    server_name app.yunzhaopian.cc;
+    server_name o1145141414514o.asia;
 
-    ssl_certificate     /etc/letsencrypt/live/app.yunzhaopian.cc/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/app.yunzhaopian.cc/privkey.pem;
+    ssl_certificate     /etc/letsencrypt/live/o1145141414514o.asia/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/o1145141414514o.asia/privkey.pem;
 
     # --- Security Headers (safe set) ---
     add_header Strict-Transport-Security "max-age=31536000" always;
